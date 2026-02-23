@@ -70,13 +70,13 @@ const getCrypto = async () => {
 export const processData = async (aesKey: string, polledData: PolledData): Promise<Data[]> => {
   const { data } = polledData;
   let parsedData: Data[] = [];
-  
+
   if (data && data.length > 0) {
     const crypto = await getCrypto();
     const decryptedData: string[] = data.map((item) => {
       const iv = Buffer.from(item, 'base64').slice(0, 16);
       const key = Buffer.from(aesKey, 'base64');
-      const decipher = crypto.createDecipheriv('aes-256-cfb', key, iv);
+      const decipher = crypto.createDecipheriv('aes-256-ctr', key, iv);
       let mystr: string = decipher.update(Buffer.from(item, 'base64').slice(16)).toString();
       mystr += decipher.final('utf8');
       return mystr;
@@ -97,7 +97,7 @@ export const handleResponseExport = (item: Data): void => {
 
 export const handleDataExport = (): void => {
   if (typeof window === 'undefined') return;
-  
+
   const values: Record<string, string> = {};
   for (let i = 0; i < localStorage.length; i++) {
     const key = localStorage.key(i);
@@ -108,7 +108,7 @@ export const handleDataExport = (): void => {
       }
     }
   }
-  
+
   const fileName = `${format(Date.now(), 'yyyy-MM-dd_hh:mm')}.json`;
   downloadData(JSON.stringify(values), fileName);
 };
@@ -144,7 +144,7 @@ export const deregister = (
     headers,
     referrerPolicy: 'no-referrer',
     body: JSON.stringify(registerFetcherOptions),
-  }).catch(() => {});
+  }).catch(() => { });
 };
 
 export const register = (
@@ -157,18 +157,18 @@ export const register = (
   const { pub, priv, correlation, secret } = generateRegistrationParams(
     currentData.correlationIdLength
   );
-  
+
   const registerFetcherOptions = reregister
     ? {
-        'public-key': btoa(currentData.publicKey),
-        'secret-key': currentData.secretKey,
-        'correlation-id': currentData.correlationId,
-      }
+      'public-key': btoa(currentData.publicKey),
+      'secret-key': currentData.secretKey,
+      'correlation-id': currentData.correlationId,
+    }
     : {
-        'public-key': btoa(pub),
-        'secret-key': secret,
-        'correlation-id': correlation,
-      };
+      'public-key': btoa(pub),
+      'secret-key': secret,
+      'correlation-id': correlation,
+    };
 
   const contentType = { 'Content-Type': 'application/json' };
   const authorizationHeader = { Authorization: token };
@@ -194,7 +194,7 @@ export const register = (
       1,
       host
     );
-    
+
     const tabData: Tab[] = [
       {
         'unique-id': uniqueId,
@@ -208,40 +208,40 @@ export const register = (
     const data: StoredData = reregister
       ? { ...currentData, aesKey: '', token }
       : {
-          privateKey: priv,
-          publicKey: pub,
-          correlationId: correlation,
-          secretKey: secret,
-          view: currentData.view,
-          theme: currentData.theme,
-          host,
-          correlationIdLength: currentData.correlationIdLength,
-          correlationIdNonceLength: currentData.correlationIdNonceLength,
-          responseExport: false,
-          increment: 1,
-          token,
-          telegram: {
-            enabled: false,
-            botToken: '',
-            chatId: '',
-          },
-          slack: {
-            enabled: false,
-            hookKey: '',
-            channel: '',
-          },
-          discord: {
-            enabled: false,
-            webhook: '',
-            channel: '',
-          },
-          tabs: tabData,
-          selectedTab: tabData[0],
-          data: [],
-          aesKey: '',
-          notes: [],
-          filter: defaultFilter,
-        };
+        privateKey: priv,
+        publicKey: pub,
+        correlationId: correlation,
+        secretKey: secret,
+        view: currentData.view,
+        theme: currentData.theme,
+        host,
+        correlationIdLength: currentData.correlationIdLength,
+        correlationIdNonceLength: currentData.correlationIdNonceLength,
+        responseExport: false,
+        increment: 1,
+        token,
+        telegram: {
+          enabled: false,
+          botToken: '',
+          chatId: '',
+        },
+        slack: {
+          enabled: false,
+          hookKey: '',
+          channel: '',
+        },
+        discord: {
+          enabled: false,
+          webhook: '',
+          channel: '',
+        },
+        tabs: tabData,
+        selectedTab: tabData[0],
+        data: [],
+        aesKey: '',
+        notes: [],
+        filter: defaultFilter,
+      };
 
     if (!reregister) {
       clearIntervals();
@@ -267,7 +267,7 @@ export const poll = (
   handleCustomHostDialogVisibility: () => void
 ): Promise<PolledData> => {
   const headers: Record<string, string> = token !== '' ? { Authorization: token } : {};
-  
+
   return fetch(`https://${host}/poll?id=${correlationId}&secret=${secretKey}`, {
     method: 'GET',
     cache: 'no-cache',
@@ -284,7 +284,7 @@ export const poll = (
         }
       };
       const data = await getRes();
-      
+
       if (!res.ok) {
         const err = data.error;
         if (err === 'could not get interactions: could not get correlation-id from cache') {
