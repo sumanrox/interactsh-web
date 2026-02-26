@@ -1,4 +1,5 @@
 # Interactsh Web Client
+<img width="1909" height="784" alt="Screenshot_20260227_011053" src="https://github.com/user-attachments/assets/928c3a62-1c65-48de-ae84-67b60ec6ead2" />
 
 <h4 align="center">A Next.js-based web interface for <a href="https://github.com/projectdiscovery/interactsh">Interactsh</a></h4>
 
