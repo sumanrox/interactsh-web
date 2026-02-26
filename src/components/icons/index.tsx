@@ -60,6 +60,8 @@ export const LoaderIcon = (props: IconProps) => {
     />
   );
 };
+
+export const SearchIcon = withFeather(Feather.Search);
 export const ArrowRightIcon = withFeather(Feather.ArrowRight);
 export const BellIcon = withFeather(Feather.Bell);
 

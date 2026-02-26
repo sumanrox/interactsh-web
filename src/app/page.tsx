@@ -36,6 +36,7 @@ const HomePage = () => {
   const [storedData, setStoredData] = useState<StoredData>(defaultStoredData);
   const [isCustomHostDialogVisible, setIsCustomHostDialogVisible] = useState(false);
   const [urlCopied, setUrlCopied] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   const [isClient, setIsClient] = useState(false);
   
   // Strict Resize States (flex-basis)
@@ -65,6 +66,10 @@ const HomePage = () => {
     if (nw) setNotesWidth(parseInt(nw, 10));
     
     hasLoadedInitialData.current = true;
+
+    const handleUnload = () => flushStoredData();
+    window.addEventListener('beforeunload', handleUnload);
+    return () => window.removeEventListener('beforeunload', handleUnload);
   }, []);
 
   const handleMouseDown = (type: 'h-main' | 'v-reqres' | 'v-notes') => (e: React.MouseEvent) => {
@@ -130,23 +135,45 @@ const HomePage = () => {
   const handleResetPopupDialogVisibility = useCallback(() => setIsResetPopupDialogVisible(v => !v), []);
   const handleNotificationsDialogVisibility = useCallback(() => setIsNotificationsDialogVisible(v => !v), []);
   const handleCustomHostDialogVisibility = useCallback(() => setIsCustomHostDialogVisible(v => !v), []);
-  const handleThemeSelection = (name: string) => setStoredData({ ...storedData, theme: name });
-  const handleTabButtonClick = (tab: Tab) => { setStoredData({ ...storedData, selectedTab: tab }); setSelectedInteraction(null); };
+  
+  const handleThemeSelection = (name: string) => 
+    setStoredData((prev) => ({ ...prev, theme: name }));
+  
+  const handleTabButtonClick = (tab: Tab) => { 
+    setStoredData((prev) => ({ ...prev, selectedTab: tab })); 
+    setSelectedInteraction(null); 
+  };
 
   const handleAddNewTab = () => {
-    const { increment, host, correlationId, correlationIdNonceLength } = storedData;
-    const newIncrement = increment + 1;
-    const { url, uniqueId } = generateUrl(correlationId, correlationIdNonceLength, newIncrement, host);
-    const tabData: Tab = { 'unique-id': uniqueId, correlationId, name: newIncrement.toString(), url, note: '' };
-    setStoredData({ ...storedData, tabs: storedData.tabs.concat([tabData]), selectedTab: tabData, increment: newIncrement });
+    setStoredData((prev) => {
+      const { increment, host, correlationId, correlationIdNonceLength } = prev;
+      const newIncrement = increment + 1;
+      const { url, uniqueId } = generateUrl(correlationId, correlationIdNonceLength, newIncrement, host);
+      const tabData: Tab = { 'unique-id': uniqueId, correlationId, name: newIncrement.toString(), url, note: '' };
+      return { 
+        ...prev, 
+        tabs: prev.tabs.concat([tabData]), 
+        selectedTab: tabData, 
+        increment: newIncrement 
+      };
+    });
     setSelectedInteraction(null);
   };
 
   const handleNoteInputChange: React.ChangeEventHandler<HTMLTextAreaElement> = (e) => {
-    const { selectedTab, tabs } = storedData;
-    const updatedTab = { ...selectedTab, note: e.target.value };
-    const newTabs = tabs.map((tab) => tab['unique-id'] === selectedTab['unique-id'] ? updatedTab : tab);
-    setStoredData({ ...storedData, tabs: newTabs, selectedTab: updatedTab });
+    const value = e.target.value;
+    setStoredData((prev) => {
+      const { selectedTab, tabs } = prev;
+      const updatedTab = { ...selectedTab, note: value };
+      const newTabs = tabs.map((tab) => 
+        tab['unique-id'] === selectedTab['unique-id'] ? updatedTab : tab
+      );
+      return { ...prev, tabs: newTabs, selectedTab: updatedTab };
+    });
+  };
+
+  const handleResponseExportChange = (enabled: boolean) => {
+    setStoredData((prev) => ({ ...prev, responseExport: enabled }));
   };
 
   const handleRowClick = useCallback((id: string) => {
@@ -156,46 +183,81 @@ const HomePage = () => {
   }, []);
 
   const processPolledData = useCallback(async () => {
-    const current = getStoredData();
     try {
-      const pollData = await poll(current.correlationId, current.secretKey, current.host, current.token, handleResetPopupDialogVisibility, handleCustomHostDialogVisibility);
+      const current = getStoredData();
+      const pollData = await poll(
+        current.correlationId, 
+        current.secretKey, 
+        current.host, 
+        current.token, 
+        handleResetPopupDialogVisibility, 
+        handleCustomHostDialogVisibility
+      );
+      
       setIsRegistered(true);
       if (pollData?.data?.length > 0 && !pollData.error) {
         let aes = current.aesKey;
         if (pollData.aes_key) aes = decryptAESKey(current.privateKey, pollData.aes_key);
         const processed = await processData(aes, pollData);
-        const combined = current.data.concat(processed);
-        setStoredData({ ...current, data: combined, aesKey: aes });
-        const filtered = combined.filter((item) => item['unique-id'] === current.selectedTab['unique-id']);
-        filteredDataRef.current = filtered;
-        setFilteredData(filtered);
+        
+        setStoredData((prev) => {
+          const combined = prev.data.concat(processed);
+          return { ...prev, data: combined, aesKey: aes };
+        });
       }
-    } catch (error) { setIsRegistered(false); }
+    } catch (error) { 
+      setIsRegistered(false); 
+    }
   }, [handleResetPopupDialogVisibility, handleCustomHostDialogVisibility]);
 
-  useEffect(() => { if (hasLoadedInitialData.current) writeStoredData(storedData); }, [storedData]);
+  useEffect(() => { 
+    if (hasLoadedInitialData.current) {
+      writeStoredData(storedData); 
+    }
+  }, [storedData]);
 
   useEffect(() => {
     if (!isClient) return;
     const sync = () => setStoredData(getStoredData());
     window.addEventListener('storage', sync);
-    setIsRegistered(true);
+    
+    // Initial registration if needed
     if (storedData.correlationId === '') {
-      setTimeout(() => register(storedData.host, storedData.token, false, false).then(d => { setStoredData(d); setIsRegistered(true); }), 1500);
+      setTimeout(() => {
+        register(storedData.host, storedData.token, false, false).then(d => { 
+          setStoredData(d); 
+          setIsRegistered(true); 
+        });
+      }, 1500);
     }
+    
     return () => window.removeEventListener('storage', sync);
   }, [isClient]);
 
   useEffect(() => {
     if (!isClient || storedData.tabs.length === 0) return;
     const id = setInterval(processPolledData, 4000);
-    const filtered = storedData.data.filter((i) => i['unique-id'] === storedData.selectedTab['unique-id']);
+    
+    const filtered = storedData.data.filter((i) => {
+      const matchesTab = i['unique-id'] === storedData.selectedTab['unique-id'];
+      const matchesSearch = searchQuery === '' || 
+        i['full-id'].toLowerCase().includes(searchQuery.toLowerCase()) ||
+        i['remote-address'].toLowerCase().includes(searchQuery.toLowerCase()) ||
+        i.protocol.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (i['raw-request'] && i['raw-request'].toLowerCase().includes(searchQuery.toLowerCase()));
+      
+      return matchesTab && matchesSearch;
+    });
+    
     filteredDataRef.current = filtered;
     setFilteredData(filtered);
+    
     return () => clearInterval(id);
-  }, [storedData.selectedTab, isClient, processPolledData]);
+  }, [storedData.selectedTab, storedData.data, isClient, processPolledData, searchQuery]);
 
-  const selectedTabsIndex = storedData.tabs.findIndex((item) => item === storedData.selectedTab);
+  const selectedTabsIndex = storedData.tabs.findIndex(
+    (item) => item['unique-id'] === storedData.selectedTab['unique-id']
+  );
   const theme = useMemo(() => themes[storedData.theme] || defaultTheme, [storedData.theme]);
 
   if (!isClient) return null;
@@ -220,6 +282,9 @@ const HomePage = () => {
           isCustomHostDialogVisible={isCustomHostDialogVisible}
           handleCustomHostDialogVisibility={handleCustomHostDialogVisibility}
           processPolledData={processPolledData}
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+          onResponseExportChange={handleResponseExportChange}
         />
         <div className="main-content">
           <div className="left-content">

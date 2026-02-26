@@ -53,6 +53,11 @@ export const getStoredData = (): StoredData => {
   if (typeof window === 'undefined') {
     return defaultStoredData;
   }
+
+  // Always return pending data if a write is queued, ensuring state consistency
+  if (pendingData) {
+    return pendingData;
+  }
   
   try {
     const stored = localStorage.getItem(STORAGE_KEY);

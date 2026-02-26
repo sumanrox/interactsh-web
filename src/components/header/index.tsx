@@ -10,6 +10,8 @@ import {
   CopyIcon,
   BellIcon,
   RefreshIcon,
+  SearchIcon,
+  CloseIcon,
 } from '@/components/icons';
 import { themes } from '@/themes';
 import NotificationsPopup from '@/components/notificationsPopup';
@@ -35,6 +37,9 @@ interface HeaderP {
   handleNotificationsDialogVisibility: () => void;
   handleCustomHostDialogVisibility: () => void;
   processPolledData: () => void;
+  searchQuery: string;
+  onSearchChange: (query: string) => void;
+  onResponseExportChange: (enabled: boolean) => void;
 }
 
 const Header = ({
@@ -52,6 +57,9 @@ const Header = ({
   handleNotificationsDialogVisibility,
   handleCustomHostDialogVisibility,
   processPolledData,
+  searchQuery,
+  onSearchChange,
+  onResponseExportChange,
 }: HeaderP) => {
   const data = getStoredData();
   const [inputData, setInputData] = useState({
@@ -60,9 +68,8 @@ const Header = ({
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   const handleToggleBtn = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const currentStoredData = getStoredData();
     setInputData({ ...inputData, responseExport: e.target.checked });
-    writeStoredData({ ...currentStoredData, responseExport: e.target.checked });
+    onResponseExportChange(e.target.checked);
   };
 
   const onRefreshClick = () => {
@@ -89,6 +96,23 @@ const Header = ({
             <span className="url_val">{url}</span>
           </div>
         )}
+      </div>
+
+      <div className="center-group">
+        <div className="search_bar">
+          <SearchIcon className="search_icon" />
+          <input 
+            type="text" 
+            placeholder="SEARCH_INTERACTIONS..." 
+            value={searchQuery}
+            onChange={(e) => onSearchChange(e.target.value)}
+          />
+          {searchQuery && (
+            <button className="clear_search" onClick={() => onSearchChange('')}>
+              <CloseIcon style={{ width: '12px', height: '12px' }} />
+            </button>
+          )}
+        </div>
       </div>
 
       <div className="right-group">
