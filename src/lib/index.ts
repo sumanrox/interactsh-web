@@ -51,7 +51,7 @@ export const decryptAESKey = (privateKey: string, aesKey: string): string => {
       scheme: 'pkcs1_oaep',
     },
   });
-  key.importKey(privateKey, 'pkcs8-private');
+  key.importKey(privateKey, 'pkcs8-private-pem');
   return key.decrypt(aesKey, 'base64');
 };
 

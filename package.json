@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "next dev -p 3000",
     "build": "next build",
+    "export": "next build --export",
     "start": "next start",
     "lint": "next lint"
   },
@@ -13,7 +14,7 @@
     "@headlessui/react": "^2.2.0",
     "@vercel/analytics": "^1.4.1",
     "buffer": "^6.0.3",
-    "crypto-browserify": "^3.12.1",
+    "crypto-browserify": "^3.5.1",
     "date-fns": "^4.1.0",
     "js-file-download": "^0.4.12",
     "next": "^16.0.7",

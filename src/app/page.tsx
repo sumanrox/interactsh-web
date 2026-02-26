@@ -116,13 +116,12 @@ const HomePage = () => {
 
   const handleNoteInputChange: React.ChangeEventHandler<HTMLTextAreaElement> = (e) => {
     const { selectedTab, tabs } = storedData;
-    const index = tabs.findIndex((item) => item === selectedTab);
-    const currentTab = tabs[index];
-    const filteredTabList = tabs.filter((item) => item !== selectedTab);
-    filteredTabList.push({ ...currentTab, note: e.target.value });
+    const updatedTab = { ...selectedTab, note: e.target.value };
+    const newTabs = tabs.map((tab) => (tab === selectedTab ? updatedTab : tab));
     setStoredData({
       ...storedData,
-      tabs: filteredTabList,
+      tabs: newTabs,
+      selectedTab: updatedTab,
     });
   };
 
@@ -153,16 +152,14 @@ const HomePage = () => {
   };
 
   const handleTabRename: React.ChangeEventHandler<HTMLInputElement> = (e) => {
-    const tempTabsList = storedData.tabs;
-    const index = tempTabsList.findIndex((item) => item === storedData.selectedTab);
-    const filteredTabList = tempTabsList.filter(
-      (item) => item !== storedData.selectedTab
-    );
-    const tempTab = { ...tempTabsList[index], name: e.target.value };
+    const { selectedTab, tabs } = storedData;
+    const updatedTab = { ...selectedTab, name: e.target.value };
+    const newTabs = tabs.map((tab) => (tab === selectedTab ? updatedTab : tab));
 
     setStoredData({
       ...storedData,
-      tabs: filteredTabList.concat(tempTab),
+      tabs: newTabs,
+      selectedTab: updatedTab,
     });
   };
 

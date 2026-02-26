@@ -13,6 +13,7 @@ const nextConfig = {
       crypto: 'crypto-browserify',
       stream: 'stream-browserify',
       buffer: 'buffer/',
+      'asn1.js-rfc3280': './src/lib/asn1.js-rfc3280-patch.js',
     },
   },
 };
