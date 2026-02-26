@@ -19,7 +19,7 @@ import {
 import { Data } from '@/lib/types/data';
 import { StoredData } from '@/lib/types/storedData';
 import { Tab } from '@/lib/types/tab';
-import { ThemeName, getTheme } from '@/theme';
+import { themes, defaultTheme } from '@/themes';
 import { writeStoredData, getStoredData, defaultStoredData, flushStoredData } from '@/lib/localStorage';
 import RequestsTableWrapper from './components/requestsTableWrapper';
 import './styles.scss';
@@ -130,7 +130,7 @@ const HomePage = () => {
   const handleResetPopupDialogVisibility = useCallback(() => setIsResetPopupDialogVisible(v => !v), []);
   const handleNotificationsDialogVisibility = useCallback(() => setIsNotificationsDialogVisible(v => !v), []);
   const handleCustomHostDialogVisibility = useCallback(() => setIsCustomHostDialogVisible(v => !v), []);
-  const handleThemeSelection = (value: ThemeName) => setStoredData({ ...storedData, theme: value });
+  const handleThemeSelection = (name: string) => setStoredData({ ...storedData, theme: name });
   const handleTabButtonClick = (tab: Tab) => { setStoredData({ ...storedData, selectedTab: tab }); setSelectedInteraction(null); };
 
   const handleAddNewTab = () => {
@@ -196,7 +196,8 @@ const HomePage = () => {
   }, [storedData.selectedTab, isClient, processPolledData]);
 
   const selectedTabsIndex = storedData.tabs.findIndex((item) => item === storedData.selectedTab);
-  const theme = useMemo(() => getTheme(storedData.theme), [storedData.theme]);
+  const theme = useMemo(() => themes[storedData.theme] || defaultTheme, [storedData.theme]);
+
   if (!isClient) return null;
 
   return (
@@ -236,6 +237,7 @@ const HomePage = () => {
             <div className="editor-section">
               <div className="request-panel" style={{ flexBasis: `${requestWidth}%` }}>
                 <DetailedRequest
+                  key={`req-${selectedInteractionData?.id || 'empty'}`}
                   view="side_by_side"
                   data={selectedInteractionData ? `${selectedInteractionData['raw-request']}` : ''}
                   title="REQUEST"
@@ -247,6 +249,7 @@ const HomePage = () => {
 
               <div className="response-panel">
                 <DetailedRequest
+                  key={`res-${selectedInteractionData?.id || 'empty'}`}
                   view="side_by_side"
                   data={selectedInteractionData ? `${selectedInteractionData['raw-response'] || ''}` : ''}
                   title="RESPONSE"

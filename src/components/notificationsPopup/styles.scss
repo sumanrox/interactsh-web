@@ -11,17 +11,18 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  animation: fadeIn 0.15s ease-out;
+  animation: fadeIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
   .dialog_box {
-    background: #0e0e0e;
-    border: 1px solid #333;
+    background: #0a0a0c;
+    border: 1px solid #232631;
     width: 520px;
     max-width: 95vw;
     padding: 24px;
     display: flex;
     flex-direction: column;
     position: relative;
+    animation: modalIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 
     .header {
       display: flex;
@@ -29,7 +30,7 @@
       justify-content: space-between;
       margin-bottom: 24px;
       padding-bottom: 12px;
-      border-bottom: 1px solid #333;
+      border-bottom: 1px solid #232631;
       
       span {
         font-size: 14px;
@@ -56,7 +57,7 @@
         height: 40px;
         display: flex;
         background: #000;
-        border: 1px solid #222;
+        border: 1px solid #232631;
         margin-bottom: 24px;
 
         .tab {
@@ -67,7 +68,7 @@
           cursor: pointer;
           font-size: 11px;
           font-weight: 700;
-          color: #888;
+          color: #888ea1;
           text-transform: uppercase;
           letter-spacing: 0.05rem;
           border-bottom: 2px solid transparent;
@@ -76,13 +77,13 @@
           gap: 12px;
 
           &:hover { 
-            background: #111; 
+            background: #12141a; 
             color: #ccc;
           }
           
           &[data-headlessui-state*="selected"] {
             color: #fff;
-            background: #111;
+            background: #12141a;
             border-bottom-color: var(--accent);
           }
 
@@ -106,13 +107,13 @@
           color: #fff;
           height: 38px;
           padding: 0 12px;
-          border: 1px solid #333;
+          border: 1px solid #232631;
           background: #000;
           margin-bottom: 16px;
           width: 100%;
           outline: none;
 
-          &::placeholder { color: #666; }
+          &::placeholder { color: #4a4f5d; }
           &:focus { border-color: var(--accent); }
         }
 
@@ -161,4 +162,3 @@
   from { opacity: 0; }
   to { opacity: 1; }
 }
-

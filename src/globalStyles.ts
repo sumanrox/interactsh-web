@@ -1,12 +1,13 @@
 import { createGlobalStyle } from 'styled-components';
-import { Theme } from '@/theme';
+import { Theme } from '@/themes';
 
 export const GlobalStyles = createGlobalStyle<{ theme: Theme }>`
   :root {
     --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
     --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
-    --accent: #b5fc58;
-    --accent-subtle: #1a2314;
+    --accent: ${props => props.theme.accent};
+    --accent-rgb: ${props => props.theme.accentRGB};
+    --accent-subtle: ${props => props.theme.accentSubtle};
   }
 
   * {
@@ -22,8 +23,8 @@ export const GlobalStyles = createGlobalStyle<{ theme: Theme }>`
   }
 
   body {
-    background: #0b0b0b;
-    color: #eaeaea;
+    background: ${props => props.theme.background};
+    color: ${props => props.theme.text};
     font-family: var(--font-sans);
     margin: 0;
     -webkit-font-smoothing: antialiased;
@@ -58,11 +59,11 @@ export const GlobalStyles = createGlobalStyle<{ theme: Theme }>`
   }
 
   ::-webkit-scrollbar-thumb {
-    background: #222;
+    background: #232631;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    background: #333;
+    background: #303443;
   }
 
   /* TOOLTIP SYSTEM - Render on the RIGHT to avoid blocking content below */
@@ -128,6 +129,16 @@ export const GlobalStyles = createGlobalStyle<{ theme: Theme }>`
   @keyframes fadeIn {
     from { opacity: 0; }
     to { opacity: 1; }
+  }
+
+  @keyframes slideInUp {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes modalIn {
+    from { opacity: 0; transform: scale(0.95) translateY(-10px); }
+    to { opacity: 1; transform: scale(1) translateY(0); }
   }
 
   @keyframes spin {

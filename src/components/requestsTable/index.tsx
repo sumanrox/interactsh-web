@@ -154,8 +154,7 @@ const TableRow = memo(({
 
   const info = useMemo(() => {
     if (item.protocol === 'dns') {
-      const qType = item['q-type'] || 'A';
-      return `${qType} | ${item['full-id']}`;
+      return item['q-type'] || 'A';
     }
     if (item.protocol === 'smtp') return `FROM: ${item['smtp-from'] || 'Unknown'}`;
     if (item.protocol === 'http') {

@@ -11,6 +11,7 @@ import {
   BellIcon,
   RefreshIcon,
 } from '@/components/icons';
+import { themes } from '@/themes';
 import NotificationsPopup from '@/components/notificationsPopup';
 import ResetPopup from '@/components/resetPopup';
 import ToggleBtn from '@/components/toggleBtn';
@@ -25,8 +26,8 @@ interface HeaderP {
   host: string;
   url?: string;
   urlCopied?: boolean;
-  onUrlCopy?: () => void;
-  handleThemeSelection: (t: any) => void;
+  onUrlCopy?: (e: React.MouseEvent) => void;
+  handleThemeSelection: (name: string) => void;
   isResetPopupDialogVisible: boolean;
   isNotificationsDialogVisible: boolean;
   isCustomHostDialogVisible: boolean;
@@ -38,10 +39,12 @@ interface HeaderP {
 
 const Header = ({
   host,
+  theme,
   url,
   urlCopied,
   onUrlCopy,
   handleAboutPopupVisibility,
+  handleThemeSelection,
   isResetPopupDialogVisible,
   isNotificationsDialogVisible,
   isCustomHostDialogVisible,
@@ -128,6 +131,24 @@ const Header = ({
             <button type="button" onClick={handleAboutPopupVisibility} className="nav_link">
               ABOUT
             </button>
+          </div>
+
+          <div className="v-divider" />
+
+          <div className="theme_selector" title="Switch Theme">
+            <div className="active_theme" style={{ background: (themes[theme] || themes['cyan']).accent }}></div>
+            <div className="theme_dropdown">
+              {Object.values(themes).map((t) => (
+                <div 
+                  key={t.name} 
+                  className={`theme_option ${t.name === theme ? 'active' : ''}`}
+                  onClick={() => handleThemeSelection(t.name)}
+                >
+                  <div className="dot" style={{ background: t.accent }}></div>
+                  <span>{t.name.toUpperCase()}</span>
+                </div>
+              ))}
+            </div>
           </div>
 
           <button className="refresh-btn" onClick={onRefreshClick}>

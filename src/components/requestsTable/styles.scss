@@ -126,7 +126,9 @@
       cursor: pointer;
       border-bottom: 1px solid #141414;
       background: #0b0b0b;
-      transition: all 0.1s ease;
+      transition: background-color 0.2s cubic-bezier(0.4, 0, 0.2, 1), transform 0.1s ease;
+      animation: slideInUp 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
 
       &:hover {
         background-color: rgba(255, 255, 255, 0.05);
@@ -135,11 +137,21 @@
         }
       }
 
+      &:active {
+        transform: scale(0.998);
+        background-color: rgba(255, 255, 255, 0.1);
+      }
+
       &.selected_row {
         background-color: var(--accent) !important;
+        transition: background-color 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        z-index: 5;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        
         td { 
           color: #000 !important;
-          font-weight: 600;
+          font-weight: 700;
+          border-right-color: rgba(0, 0, 0, 0.1);
         }
         
         &:hover {

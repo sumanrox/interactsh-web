@@ -4,16 +4,17 @@
   display: flex;
   flex-direction: column;
   height: 100%;
-  background: #0e0e0e;
+  background: #0a0a0c;
   overflow: hidden;
+  animation: fadeIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 
   .pane-header {
     height: 40px;
     padding: 0 16px;
     display: flex;
     align-items: center;
-    background: #111111;
-    border-bottom: 1px solid #1a1a1a;
+    background: #12141a;
+    border-bottom: 1px solid #232631;
     overflow: visible; /* CRITICAL */
     position: relative;
     z-index: 20;
@@ -57,8 +58,8 @@
     padding: 0 16px;
     display: flex;
     align-items: center;
-    background: #0e0e0e;
-    border-bottom: 1px solid #1a1a1a;
+    background: #0a0a0c;
+    border-bottom: 1px solid #232631;
     overflow: visible;
     position: relative;
     z-index: 15;
@@ -87,7 +88,7 @@
   .editor-body {
     flex: 1;
     overflow: auto;
-    background: #0e0e0e;
+    background: #0a0a0c;
 
     .editor-grid {
       display: grid;
@@ -99,9 +100,9 @@
       .line-number {
         grid-column: 1;
         width: 50px;
-        background: #0e0e0e;
-        border-right: 1px solid #1a1a1a;
-        color: #555555;
+        background: #0a0a0c;
+        border-right: 1px solid #232631;
+        color: #4a4f5d;
         text-align: right;
         padding-right: 16px;
         font-family: var(--font-mono);
@@ -114,7 +115,7 @@
         grid-column: 2;
         padding-left: 16px;
         padding-right: 16px;
-        color: #eaeaea;
+        color: #ffffff;
         font-family: var(--font-mono);
         font-size: 13px;
         line-height: 22px;

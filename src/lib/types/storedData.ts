@@ -1,4 +1,4 @@
-import { ThemeName } from '@/theme';
+import { ThemeName } from '@/themes';
 import { Data } from './data';
 import { Discord } from './discord';
 import { Filter, defaultFilter } from './filter';
@@ -32,7 +32,7 @@ export interface StoredData {
 }
 
 export const defaultStoredData: StoredData = {
-  theme: 'noir',
+  theme: 'cyan',
   privateKey: '',
   publicKey: '',
   correlationId: '',
