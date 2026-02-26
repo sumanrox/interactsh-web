@@ -72,10 +72,9 @@ const RequestsTable = memo(({ data, handleRowClick, selectedInteraction, filter 
 
   return (
     <table className="requests_table">
-      <thead className="secondary_bg">
+      <thead>
         <tr>
           <th>#</th>
-          <th>TIME</th>
           <th>
             <div id="filter_dropdown" ref={dropdownRef}>
               <div
@@ -83,10 +82,10 @@ const RequestsTable = memo(({ data, handleRowClick, selectedInteraction, filter 
                 onClick={handleFilterDropdownVisibility}
               >
                 TYPE
-                {isFiltered ? <FilterSelectedIcon /> : <FilterIcon />}
+                {isFiltered ? <FilterSelectedIcon style={{ marginLeft: '4px' }} /> : <FilterIcon style={{ marginLeft: '4px' }} />}
               </div>
               {filterDropdownVisibility && (
-                <div className="filter_dropdown secondary_bg">
+                <div className="filter_dropdown">
                   <ul>
                     {protocols.map((p) => (
                       <li key={p}>
@@ -109,6 +108,10 @@ const RequestsTable = memo(({ data, handleRowClick, selectedInteraction, filter 
               )}
             </div>
           </th>
+          <th>ID</th>
+          <th>ADDRESS</th>
+          <th>INFO</th>
+          <th>TIME</th>
         </tr>
       </thead>
       <tbody>
@@ -144,11 +147,25 @@ const TableRow = memo(({
     onClick(item.id);
   }, [onClick, item.id]);
 
-  // Memoize the formatted time to prevent recalculation on every render
   const formattedTime = useMemo(() => 
     formatDistance(new Date(item.timestamp), new Date(), { addSuffix: true }),
     [item.timestamp]
   );
+
+  const info = useMemo(() => {
+    if (item.protocol === 'dns') {
+      const qType = item['q-type'] || 'A';
+      return `${qType} | ${item['full-id']}`;
+    }
+    if (item.protocol === 'smtp') return `FROM: ${item['smtp-from'] || 'Unknown'}`;
+    if (item.protocol === 'http') {
+      const firstLine = item['raw-request'].split('\n')[0];
+      const match = firstLine.match(/^([A-Z]+)\s+([^\s?]+)/);
+      if (match) return `${match[1]} ${match[2]}`;
+      return firstLine.substring(0, 50);
+    }
+    return '';
+  }, [item]);
 
   return (
     <tr
@@ -156,8 +173,11 @@ const TableRow = memo(({
       className={isSelected ? 'selected_row' : ''}
     >
       <td>{total - index}</td>
+      <td>{item.protocol.toUpperCase()}</td>
+      <td>{item['full-id']}</td>
+      <td>{item['remote-address']}</td>
+      <td title={info}>{info}</td>
       <td>{formattedTime}</td>
-      <td>{item.protocol}</td>
     </tr>
   );
 });

@@ -4,42 +4,29 @@ import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react'
 import { format } from 'date-fns';
 import { ThemeProvider } from 'styled-components';
 
-import {
-  ChevronUpIcon,
-  ClearIcon,
-  CloseIcon,
-  CopyIcon,
-  SideBySideIcon,
-  UpDownIcon,
-} from '@/components/icons';
 import AppLoader from '@/components/appLoader';
 import Header from '@/components/header';
-import TabSwitcher from '@/components/tabSwitcher';
+import DetailedRequest from '@/components/detailedRequest';
 import { GlobalStyles } from '@/globalStyles';
 import {
   generateUrl,
   poll,
   decryptAESKey,
   processData,
-  handleResponseExport,
-  copyDataToClipboard,
   register,
+  copyDataToClipboard,
 } from '@/lib';
-import { notifyTelegram, notifySlack, notifyDiscord } from '@/lib/notify';
 import { Data } from '@/lib/types/data';
 import { StoredData } from '@/lib/types/storedData';
 import { Tab } from '@/lib/types/tab';
-import { View } from '@/lib/types/view';
 import { ThemeName, getTheme } from '@/theme';
 import { writeStoredData, getStoredData, defaultStoredData, flushStoredData } from '@/lib/localStorage';
-import RequestDetailsWrapper from './components/requestDetailsWrapper';
 import RequestsTableWrapper from './components/requestsTableWrapper';
 import './styles.scss';
 
 const HomePage = () => {
   const [aboutPopupVisibility, setAboutPopupVisibility] = useState<boolean>(false);
   const [filteredData, setFilteredData] = useState<Array<Data>>([]);
-  const [isNotesOpen, setIsNotesOpen] = useState<boolean>(false);
   const [isRegistered, setIsRegistered] = useState<boolean>(false);
   const [isResetPopupDialogVisible, setIsResetPopupDialogVisible] = useState<boolean>(false);
   const [isNotificationsDialogVisible, setIsNotificationsDialogVisible] = useState<boolean>(false);
@@ -48,370 +35,182 @@ const HomePage = () => {
   const [selectedInteractionData, setSelectedInteractionData] = useState<Data | null>(null);
   const [storedData, setStoredData] = useState<StoredData>(defaultStoredData);
   const [isCustomHostDialogVisible, setIsCustomHostDialogVisible] = useState(false);
+  const [urlCopied, setUrlCopied] = useState(false);
   const [isClient, setIsClient] = useState(false);
+  
+  // Strict Resize States (flex-basis)
+  const [tableHeight, setTableHeight] = useState(55); // %
+  const [requestWidth, setRequestWidth] = useState(50); // %
+  const [notesWidth, setNotesWidth] = useState(320); // px
+
   const hasLoadedInitialData = useRef(false);
   const filteredDataRef = useRef<Array<Data>>([]);
+  const resizeRef = useRef<{
+    type: 'h-main' | 'v-reqres' | 'v-notes' | null;
+    startX: number;
+    startY: number;
+    startBasis: number;
+  }>({ type: null, startX: 0, startY: 0, startBasis: 0 });
 
-  // Initialize stored data on client side
   useEffect(() => {
     setIsClient(true);
     const loadedData = getStoredData();
     setStoredData(loadedData);
+    
+    const h = localStorage.getItem('tableHeightBasis');
+    if (h) setTableHeight(parseFloat(h));
+    const rw = localStorage.getItem('requestWidthBasis');
+    if (rw) setRequestWidth(parseFloat(rw));
+    const nw = localStorage.getItem('notesWidthBasis');
+    if (nw) setNotesWidth(parseInt(nw, 10));
+    
     hasLoadedInitialData.current = true;
   }, []);
 
-  const handleResetPopupDialogVisibility = useCallback(() => {
-    setIsResetPopupDialogVisible((prev) => !prev);
-  }, []);
-
-  const handleNotificationsDialogVisibility = useCallback(() => {
-    setIsNotificationsDialogVisible((prev) => !prev);
-  }, []);
-
-  const handleCustomHostDialogVisibility = useCallback(() => {
-    setIsCustomHostDialogVisible((prev) => !prev);
-  }, []);
-
-  const handleThemeSelection = (value: ThemeName) => {
-    setStoredData({
-      ...storedData,
-      theme: value,
-    });
+  const handleMouseDown = (type: 'h-main' | 'v-reqres' | 'v-notes') => (e: React.MouseEvent) => {
+    resizeRef.current = {
+      type,
+      startX: e.clientX,
+      startY: e.clientY,
+      startBasis: type === 'h-main' ? tableHeight : type === 'v-reqres' ? requestWidth : notesWidth,
+    };
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+    document.body.style.cursor = type === 'h-main' ? 'row-resize' : 'col-resize';
+    document.body.style.userSelect = 'none';
   };
 
-  const handleTabButtonClick = (tab: Tab) => {
-    setStoredData({
-      ...storedData,
-      selectedTab: tab,
-    });
-    setSelectedInteraction(null);
-  };
+  const handleMouseMove = useCallback((e: MouseEvent) => {
+    const { type, startX, startY, startBasis } = resizeRef.current;
+    if (!type) return;
+
+    if (type === 'h-main') {
+      const deltaY = e.clientY - startY;
+      const bodyHeight = window.innerHeight - 44; // Header height
+      const newVal = startBasis + (deltaY / bodyHeight) * 100;
+      if (newVal > 15 && newVal < 85) {
+        setTableHeight(newVal);
+        localStorage.setItem('tableHeightBasis', newVal.toString());
+      }
+    } else if (type === 'v-reqres') {
+      const deltaX = e.clientX - startX;
+      const leftContentWidth = window.innerWidth - notesWidth;
+      const newVal = startBasis + (deltaX / leftContentWidth) * 100;
+      if (newVal > 20 && newVal < 80) {
+        setRequestWidth(newVal);
+        localStorage.setItem('requestWidthBasis', newVal.toString());
+      }
+    } else if (type === 'v-notes') {
+      const deltaX = startX - e.clientX; // Resizing from right
+      const newVal = startBasis + deltaX;
+      if (newVal > 240 && newVal < 600) {
+        setNotesWidth(newVal);
+        localStorage.setItem('notesWidthBasis', newVal.toString());
+      }
+    }
+  }, [notesWidth]);
+
+  const handleMouseUp = useCallback(() => {
+    resizeRef.current.type = null;
+    document.removeEventListener('mousemove', handleMouseMove);
+    document.removeEventListener('mouseup', handleMouseUp);
+    document.body.style.cursor = 'default';
+    document.body.style.userSelect = 'auto';
+  }, [handleMouseMove]);
+
+  const handleUrlCopy = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (storedData.selectedTab?.url) {
+      copyDataToClipboard(storedData.selectedTab.url);
+      setUrlCopied(true);
+      setTimeout(() => setUrlCopied(false), 2000);
+    }
+  }, [storedData.selectedTab?.url]);
+
+  const handleResetPopupDialogVisibility = useCallback(() => setIsResetPopupDialogVisible(v => !v), []);
+  const handleNotificationsDialogVisibility = useCallback(() => setIsNotificationsDialogVisible(v => !v), []);
+  const handleCustomHostDialogVisibility = useCallback(() => setIsCustomHostDialogVisible(v => !v), []);
+  const handleThemeSelection = (value: ThemeName) => setStoredData({ ...storedData, theme: value });
+  const handleTabButtonClick = (tab: Tab) => { setStoredData({ ...storedData, selectedTab: tab }); setSelectedInteraction(null); };
 
   const handleAddNewTab = () => {
     const { increment, host, correlationId, correlationIdNonceLength } = storedData;
     const newIncrement = increment + 1;
     const { url, uniqueId } = generateUrl(correlationId, correlationIdNonceLength, newIncrement, host);
-    const tabData: Tab = {
-      'unique-id': uniqueId,
-      correlationId,
-      name: newIncrement.toString(),
-      url,
-      note: '',
-    };
-    setStoredData({
-      ...storedData,
-      tabs: storedData.tabs.concat([tabData]),
-      selectedTab: tabData,
-      increment: newIncrement,
-    });
+    const tabData: Tab = { 'unique-id': uniqueId, correlationId, name: newIncrement.toString(), url, note: '' };
+    setStoredData({ ...storedData, tabs: storedData.tabs.concat([tabData]), selectedTab: tabData, increment: newIncrement });
     setSelectedInteraction(null);
-  };
-
-  const handleNotesVisibility = () => {
-    setTimeout(() => {
-      document.getElementById('notes_textarea')?.focus();
-    }, 200);
-    setIsNotesOpen(!isNotesOpen);
   };
 
   const handleNoteInputChange: React.ChangeEventHandler<HTMLTextAreaElement> = (e) => {
     const { selectedTab, tabs } = storedData;
     const updatedTab = { ...selectedTab, note: e.target.value };
-    const newTabs = tabs.map((tab) => (tab === selectedTab ? updatedTab : tab));
-    setStoredData({
-      ...storedData,
-      tabs: newTabs,
-      selectedTab: updatedTab,
-    });
+    const newTabs = tabs.map((tab) => tab['unique-id'] === selectedTab['unique-id'] ? updatedTab : tab);
+    setStoredData({ ...storedData, tabs: newTabs, selectedTab: updatedTab });
   };
 
   const handleRowClick = useCallback((id: string) => {
     setSelectedInteraction(id);
     const reqDetails = filteredDataRef.current.find((item) => item.id === id);
-    if (reqDetails) {
-      setSelectedInteractionData(reqDetails);
-    }
+    if (reqDetails) setSelectedInteractionData(reqDetails);
   }, []);
 
-  const handleDeleteTab = (tab: Tab) => {
-    const { tabs } = storedData;
-    const index = tabs.findIndex((value) => value === tab);
-    const filteredTempTabsList = tabs.filter((value) => value !== tab);
-    const tempTabsData = storedData.data;
-    const filteredTempTabsData = tempTabsData.filter(
-      (value) => value['unique-id'] !== tab['unique-id']
-    );
-    setStoredData({
-      ...storedData,
-      tabs: [...filteredTempTabsList],
-      selectedTab: {
-        ...filteredTempTabsList[filteredTempTabsList.length <= index ? index - 1 : index],
-      },
-      data: filteredTempTabsData,
-    });
-  };
-
-  const handleTabRename: React.ChangeEventHandler<HTMLInputElement> = (e) => {
-    const { selectedTab, tabs } = storedData;
-    const updatedTab = { ...selectedTab, name: e.target.value };
-    const newTabs = tabs.map((tab) => (tab === selectedTab ? updatedTab : tab));
-
-    setStoredData({
-      ...storedData,
-      tabs: newTabs,
-      selectedTab: updatedTab,
-    });
-  };
-
-  const handleChangeView = (value: View) => {
-    setStoredData({
-      ...storedData,
-      view: value,
-    });
-  };
-
-  const handleAboutPopupVisibility = () => {
-    setAboutPopupVisibility(!aboutPopupVisibility);
-  };
-
-  const clearInteractions = () => {
-    const { selectedTab, data } = storedData;
-    const tempData = data.filter((item) => item['unique-id'] !== selectedTab['unique-id']);
-    setStoredData({
-      ...storedData,
-      data: tempData,
-    });
-    filteredDataRef.current = [];
-    setFilteredData([]);
-  };
-
   const processPolledData = useCallback(async () => {
-    const dataFromLocalStorage = getStoredData();
-    const { privateKey, aesKey, host, token, data, correlationId, secretKey } = dataFromLocalStorage;
-
-    let decryptedAESKey = aesKey;
-
+    const current = getStoredData();
     try {
-      const pollData = await poll(
-        correlationId,
-        secretKey,
-        host,
-        token,
-        handleResetPopupDialogVisibility,
-        handleCustomHostDialogVisibility
-      );
-
+      const pollData = await poll(current.correlationId, current.secretKey, current.host, current.token, handleResetPopupDialogVisibility, handleCustomHostDialogVisibility);
       setIsRegistered(true);
-      
       if (pollData?.data?.length > 0 && !pollData.error) {
-        if (pollData.aes_key) {
-          decryptedAESKey = decryptAESKey(privateKey, pollData.aes_key);
-        }
-        const processedData = await processData(decryptedAESKey, pollData);
-
-        const formattedString = processedData.map((item: Data) => {
-          if (dataFromLocalStorage.responseExport) {
-            handleResponseExport(item);
-          }
-
-          const telegramMsg = `<i>[${item['full-id']}]</i> Received <i>${item.protocol.toUpperCase()}</i> interaction from <b><a href="https://ipinfo.io/${item['remote-address']}">${item['remote-address']}</a></b> at <i>${format(new Date(item.timestamp), 'yyyy-MM-dd_hh:mm:ss')}</i>`;
-          if (dataFromLocalStorage.telegram.enabled) {
-            notifyTelegram(telegramMsg, dataFromLocalStorage.telegram.botToken, dataFromLocalStorage.telegram.chatId, 'HTML');
-          }
-          return {
-            slack: `[${item['full-id']}] Received ${item.protocol.toUpperCase()} interaction from \n <https://ipinfo.io/${item['remote-address']}|${item['remote-address']}> at ${format(new Date(item.timestamp), 'yyyy-MM-dd_hh:mm:ss')}`,
-            discord: `[${item['full-id']}] Received ${item.protocol.toUpperCase()} interaction from \n [${item['remote-address']}](https://ipinfo.io/${item['remote-address']}) at ${format(new Date(item.timestamp), 'yyyy-MM-dd_hh:mm:ss')}`,
-          };
-        });
-
-        if (dataFromLocalStorage.slack.enabled) {
-          notifySlack(formattedString, dataFromLocalStorage.slack.hookKey, dataFromLocalStorage.slack.channel);
-        }
-        if (dataFromLocalStorage.discord.enabled) {
-          notifyDiscord(formattedString, dataFromLocalStorage.discord.webhook);
-        }
-
-        const combinedData: Data[] = data.concat(processedData);
-
-        setStoredData({
-          ...dataFromLocalStorage,
-          data: combinedData,
-          aesKey: decryptedAESKey,
-        });
-
-        const newData = combinedData
-          .filter((item) => item['unique-id'] === dataFromLocalStorage.selectedTab['unique-id']);
-        filteredDataRef.current = newData;
-        setFilteredData(newData);
+        let aes = current.aesKey;
+        if (pollData.aes_key) aes = decryptAESKey(current.privateKey, pollData.aes_key);
+        const processed = await processData(aes, pollData);
+        const combined = current.data.concat(processed);
+        setStoredData({ ...current, data: combined, aesKey: aes });
+        const filtered = combined.filter((item) => item['unique-id'] === current.selectedTab['unique-id']);
+        filteredDataRef.current = filtered;
+        setFilteredData(filtered);
       }
-    } catch (error) {
-      console.error(error);
-      setLoaderAnimationMode('server_error');
-      setIsRegistered(false);
-    }
+    } catch (error) { setIsRegistered(false); }
   }, [handleResetPopupDialogVisibility, handleCustomHostDialogVisibility]);
 
-  useEffect(() => {
-    if (hasLoadedInitialData.current) {
-      writeStoredData(storedData);
-    }
-  }, [storedData]);
+  useEffect(() => { if (hasLoadedInitialData.current) writeStoredData(storedData); }, [storedData]);
 
   useEffect(() => {
     if (!isClient) return;
-
-    const handleStorageChange = () => {
-      setStoredData(getStoredData());
-    };
-
-    window.addEventListener('storage', handleStorageChange);
+    const sync = () => setStoredData(getStoredData());
+    window.addEventListener('storage', sync);
     setIsRegistered(true);
-
-    let registrationIntervalId: number | undefined;
-
     if (storedData.correlationId === '') {
-      setLoaderAnimationMode('loading');
-      setIsRegistered(false);
-      const timeoutId = setTimeout(() => {
-        register(storedData.host, storedData.token, false, false)
-          .then((data) => {
-            setStoredData(data);
-            setIsRegistered(true);
-          })
-          .catch(() => {
-            localStorage.clear();
-            setStoredData(defaultStoredData);
-            setLoaderAnimationMode('server_error');
-            setIsRegistered(false);
-          });
-      }, 1500);
-
-      return () => {
-        clearTimeout(timeoutId);
-        window.removeEventListener('storage', handleStorageChange);
-        if (registrationIntervalId) {
-          window.clearInterval(registrationIntervalId);
-        }
-      };
+      setTimeout(() => register(storedData.host, storedData.token, false, false).then(d => { setStoredData(d); setIsRegistered(true); }), 1500);
     }
-
-    return () => {
-      window.removeEventListener('storage', handleStorageChange);
-    };
+    return () => window.removeEventListener('storage', sync);
   }, [isClient]);
-
-  const pollingIntervalRef = useRef<number | undefined>(undefined);
-  const isPageVisibleRef = useRef(true);
-
-  useEffect(() => {
-    const handleVisibilityChange = () => {
-      isPageVisibleRef.current = !document.hidden;
-      
-      if (document.hidden) {
-        if (pollingIntervalRef.current) {
-          window.clearInterval(pollingIntervalRef.current);
-          pollingIntervalRef.current = undefined;
-        }
-        flushStoredData();
-      } else if (isClient && storedData.tabs.length > 0) {
-        if (!pollingIntervalRef.current) {
-          processPolledData(); // Immediate poll on return
-          pollingIntervalRef.current = window.setInterval(() => {
-            processPolledData();
-          }, 4000);
-        }
-      }
-    };
-
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    
-    const handleBeforeUnload = () => {
-      flushStoredData();
-    };
-    window.addEventListener('beforeunload', handleBeforeUnload);
-
-    return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-      window.removeEventListener('beforeunload', handleBeforeUnload);
-    };
-  }, [isClient, storedData.tabs.length, processPolledData]);
 
   useEffect(() => {
     if (!isClient || storedData.tabs.length === 0) return;
-
-    if (pollingIntervalRef.current) {
-      window.clearInterval(pollingIntervalRef.current);
-    }
-
-    if (isPageVisibleRef.current) {
-      pollingIntervalRef.current = window.setInterval(() => {
-        processPolledData();
-      }, 4000);
-    }
-
-    const tempFilteredData = storedData.data
-      .filter((item) => item['unique-id'] === storedData.selectedTab['unique-id']);
-    filteredDataRef.current = tempFilteredData;
-    setFilteredData(tempFilteredData);
-
-    return () => {
-      if (pollingIntervalRef.current) {
-        window.clearInterval(pollingIntervalRef.current);
-        pollingIntervalRef.current = undefined;
-      }
-    };
+    const id = setInterval(processPolledData, 4000);
+    const filtered = storedData.data.filter((i) => i['unique-id'] === storedData.selectedTab['unique-id']);
+    filteredDataRef.current = filtered;
+    setFilteredData(filtered);
+    return () => clearInterval(id);
   }, [storedData.selectedTab, isClient, processPolledData]);
 
-  const selectedTabsIndex = storedData.tabs.findIndex((item) =>
-    item === storedData.selectedTab
-  );
-
+  const selectedTabsIndex = storedData.tabs.findIndex((item) => item === storedData.selectedTab);
   const theme = useMemo(() => getTheme(storedData.theme), [storedData.theme]);
-
-  if (!isClient) {
-    return null;
-  }
+  if (!isClient) return null;
 
   return (
     <ThemeProvider theme={theme}>
       <GlobalStyles theme={theme} />
       <div className="main">
         <AppLoader isRegistered={isRegistered} mode={loaderAnimationMode} />
-        {aboutPopupVisibility && (
-          <div className="about_popup_wrapper">
-            <div className="about_popup">
-              <div className="about_popup_header">
-                <span>About</span>
-                <CloseIcon style={{ width: 14, cursor: 'pointer' }} onClick={handleAboutPopupVisibility} />
-              </div>
-              <div className="about_popup_body">
-                Interactsh is an Open-Source solution for Out of band Data Extraction, A tool
-                designed to detect bugs that cause external interactions, For example - Blind SQLi,
-                Blind CMDi, SSRF, etc.
-                <br />
-                <br />
-                If you find communications or exchanges with the Interactsh.com server in your logs, it
-                is possible that someone has been testing your applications using our hosted
-                service,
-                <a href="https://app.interactsh.com" target="_blank" rel="noopener noreferrer">
-                  {' app.interactsh.com '}
-                </a>
-                You should review the time when these interactions were initiated to identify the
-                person responsible for this testing.
-                <br />
-                <br />
-                For further details about Interactsh.com,
-                <a href="https://github.com/projectdiscovery/interactsh" target="_blank" rel="noopener noreferrer">
-                  {' checkout opensource code.'}
-                </a>
-              </div>
-            </div>
-          </div>
-        )}
         <Header
-          handleAboutPopupVisibility={handleAboutPopupVisibility}
+          handleAboutPopupVisibility={() => setAboutPopupVisibility(v => !v)}
           theme={storedData.theme}
           host={storedData.host}
+          url={storedData.selectedTab?.url}
+          urlCopied={urlCopied}
+          onUrlCopy={handleUrlCopy}
           handleThemeSelection={handleThemeSelection}
           isResetPopupDialogVisible={isResetPopupDialogVisible}
           isNotificationsDialogVisible={isNotificationsDialogVisible}
@@ -419,128 +218,57 @@ const HomePage = () => {
           handleNotificationsDialogVisibility={handleNotificationsDialogVisibility}
           isCustomHostDialogVisible={isCustomHostDialogVisible}
           handleCustomHostDialogVisibility={handleCustomHostDialogVisibility}
-        />
-        <TabSwitcher
-          handleTabButtonClick={handleTabButtonClick}
-          selectedTab={storedData.selectedTab}
-          data={storedData.tabs}
-          handleAddNewTab={handleAddNewTab}
-          handleDeleteTab={handleDeleteTab}
-          handleTabRename={handleTabRename}
           processPolledData={processPolledData}
         />
-        <div className="body">
-          <div className="left_section">
-            <div className="url_container secondary_bg">
-              <div title={storedData.selectedTab && storedData.selectedTab.url}>
-                {storedData.selectedTab && storedData.selectedTab.url}
-              </div>
-              <CopyIcon
-                onClick={() => copyDataToClipboard(storedData.selectedTab.url)}
-                style={{ cursor: 'pointer' }}
-              />
-              <div className="vertical_bar" />
-              <ClearIcon
-                className={
-                  filteredData && filteredData.length <= 0 ? 'clear_button__disabled' : undefined
-                }
-                onClick={clearInteractions}
-                style={{ cursor: 'pointer' }}
+        <div className="main-content">
+          <div className="left-content">
+            <div className="capture-table" style={{ flexBasis: `${tableHeight}%` }}>
+              <RequestsTableWrapper
+                data={filteredData}
+                selectedInteraction={selectedInteraction || ''}
+                handleRowClick={handleRowClick}
+                filter={storedData.filter}
               />
             </div>
-            <RequestsTableWrapper
-              data={filteredData}
-              selectedInteraction={selectedInteraction || ''}
-              handleRowClick={handleRowClick}
-              filter={storedData.filter}
-            />
-            <div className="notes light_bg">
-              <div className="detailed_notes" style={{ display: isNotesOpen ? 'flex' : 'none' }}>
-                <textarea
-                  id="notes_textarea"
-                  className="light_bg"
-                  placeholder="You can paste your notes here (max 1200 characters)"
-                  value={storedData.tabs[selectedTabsIndex] && storedData.tabs[selectedTabsIndex].note}
-                  onChange={handleNoteInputChange}
+
+            <div className="splitter-h" onMouseDown={handleMouseDown('h-main')} />
+
+            <div className="editor-section">
+              <div className="request-panel" style={{ flexBasis: `${requestWidth}%` }}>
+                <DetailedRequest
+                  view="side_by_side"
+                  data={selectedInteractionData ? `${selectedInteractionData['raw-request']}` : ''}
+                  title="REQUEST"
+                  protocol={selectedInteractionData?.protocol || 'http'}
                 />
               </div>
-              <button type="button" onClick={handleNotesVisibility} className="notes_footer">
-                <span>Notes</span>
-                <ChevronUpIcon
-                  style={{
-                    transform: isNotesOpen ? 'rotate(180deg)' : 'rotate(0)',
-                  }}
+
+              <div className="splitter-v" onMouseDown={handleMouseDown('v-reqres')} />
+
+              <div className="response-panel">
+                <DetailedRequest
+                  view="side_by_side"
+                  data={selectedInteractionData ? `${selectedInteractionData['raw-response'] || ''}` : ''}
+                  title="RESPONSE"
+                  protocol={selectedInteractionData?.protocol || 'http'}
                 />
-              </button>
+              </div>
             </div>
           </div>
-          {selectedInteraction !== null && selectedInteractionData !== null && (
-            <div className="right_section">
-              <div className="result_header">
-                {selectedInteractionData.protocol !== 'smtp' && (
-                  <>
-                    <div className="req_res_buttons">
-                      <button
-                        type="button"
-                        className={
-                          storedData.view === 'request'
-                            ? '__selected_req_res_button'
-                            : undefined
-                        }
-                        onClick={() => handleChangeView('request')}
-                      >
-                        Request
-                      </button>
-                      <button
-                        type="button"
-                        className={
-                          storedData.view === 'response'
-                            ? '__selected_req_res_button'
-                            : undefined
-                        }
-                        onClick={() => handleChangeView('response')}
-                      >
-                        Response
-                      </button>
-                    </div>
-                    <SideBySideIcon
-                      style={{
-                        fill: storedData.view === 'side_by_side' ? '#ffffff' : '#4a4a4a',
-                        cursor: 'pointer',
-                      }}
-                      onClick={() => handleChangeView('side_by_side')}
-                    />
-                    <UpDownIcon
-                      style={{
-                        fill: storedData.view === 'up_and_down' ? '#ffffff' : '#4a4a4a',
-                        cursor: 'pointer',
-                      }}
-                      onClick={() => handleChangeView('up_and_down')}
-                    />
-                  </>
-                )}
-                <div className="result_info">
-                  From IP address
-                  <span>
-                    :{' '}
-                    <a
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      href={`https://ipinfo.io/${selectedInteractionData['remote-address']}`}
-                    >
-                      {selectedInteractionData['remote-address']}
-                    </a>
-                  </span>
-                  {' at '}
-                  <span>{format(new Date(selectedInteractionData.timestamp), 'yyyy-MM-dd_hh:mm')}</span>
-                </div>
-              </div>
-              <RequestDetailsWrapper
-                selectedInteractionData={selectedInteractionData}
-                view={storedData.view}
+
+          <div className="splitter-v" onMouseDown={handleMouseDown('v-notes')} />
+
+          <div className="notes-panel" style={{ flexBasis: `${notesWidth}px` }}>
+            <div className="section_header">NOTES</div>
+            <div className="notes_editor">
+              <textarea
+                id="notes_textarea"
+                placeholder="Capture notes here..."
+                value={storedData.tabs[selectedTabsIndex]?.note || ''}
+                onChange={handleNoteInputChange}
               />
             </div>
-          )}
+          </div>
         </div>
       </div>
     </ThemeProvider>
@@ -548,4 +276,3 @@ const HomePage = () => {
 };
 
 export default HomePage;
-

@@ -32,7 +32,7 @@ export interface StoredData {
 }
 
 export const defaultStoredData: StoredData = {
-  theme: 'synth',
+  theme: 'noir',
   privateKey: '',
   publicKey: '',
   correlationId: '',
@@ -43,7 +43,7 @@ export const defaultStoredData: StoredData = {
   data: [],
   aesKey: '',
   notes: [],
-  view: 'up_and_down',
+  view: 'side_by_side',
   increment: 1,
   host: process.env.NEXT_PUBLIC_HOST || 'oast.fun',
   tabs: [],

@@ -15,47 +15,29 @@ interface RequestDetailsWrapperP {
 const RequestDetailsWrapper = memo((props: RequestDetailsWrapperP) => {
   const { selectedInteractionData, view } = props;
 
+  // We are forcing side-by-side in styles.scss anyway, 
+  // but we should always provide both for the Burp look
   return (
-    <div
-      className="detailed_request"
-      style={{ flexDirection: view === 'up_and_down' ? 'column' : 'row' }}
-    >
+    <div className="detailed_request_wrapper">
       <ErrorBoundary
         FallbackComponent={({ resetErrorBoundary }) => (
           <IssuesListErrorFallback retry={resetErrorBoundary} />
         )}
       >
         <Suspense fallback={<IssuesListFallback />}>
-          {view === 'request' ||
-          selectedInteractionData.protocol === 'smtp' ? (
-            <DetailedRequest
-              view={view}
-              data={`${selectedInteractionData['raw-request']}`}
-              title="Request"
-              protocol={selectedInteractionData.protocol}
-            />
-          ) : view === 'response' ? (
+          <DetailedRequest
+            view={view}
+            data={`${selectedInteractionData['raw-request']}`}
+            title="Request"
+            protocol={selectedInteractionData.protocol}
+          />
+          {selectedInteractionData.protocol !== 'smtp' && (
             <DetailedRequest
               view={view}
               data={`${selectedInteractionData['raw-response'] || ''}`}
               title="Response"
               protocol={selectedInteractionData.protocol}
             />
-          ) : (
-            <>
-              <DetailedRequest
-                view={view}
-                data={`${selectedInteractionData['raw-request']}`}
-                title="Request"
-                protocol={selectedInteractionData.protocol}
-              />
-              <DetailedRequest
-                view={view}
-                data={`${selectedInteractionData['raw-response'] || ''}`}
-                title="Response"
-                protocol={selectedInteractionData.protocol}
-              />
-            </>
           )}
         </Suspense>
       </ErrorBoundary>
@@ -64,4 +46,3 @@ const RequestDetailsWrapper = memo((props: RequestDetailsWrapperP) => {
 });
 
 export default RequestDetailsWrapper;
-

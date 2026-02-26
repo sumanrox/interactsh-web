@@ -129,7 +129,7 @@ const CustomHost = ({ handleCloseDialog }: CustomHostP) => {
       {isDeleteConfirmationVisible ? (
         <div className="dialog_box">
           <div className="header">
-            <span>Remove Custom Host</span>
+            <span>REMOVE CUSTOM HOST</span>
             <CloseIcon onClick={handleDeleteConfirmationVisibility} style={{ cursor: 'pointer' }} />
           </div>
           <span>
@@ -143,14 +143,14 @@ const CustomHost = ({ handleCloseDialog }: CustomHostP) => {
               disabled={isLoading}
               onClick={handleDelete}
             >
-              Delete {isLoading && <LoaderIcon />}
+              DELETE {isLoading && <LoaderIcon />}
             </button>
           </div>
         </div>
       ) : (
         <div className="dialog_box">
           <div className="header">
-            <span>Custom Host</span>
+            <span>CUSTOM HOST</span>
             <CloseIcon onClick={handleCloseDialog} style={{ cursor: 'pointer' }} />
           </div>
           <span>
@@ -159,39 +159,39 @@ const CustomHost = ({ handleCloseDialog }: CustomHostP) => {
           <input
             type="text"
             name="custom_host"
-            placeholder="Host"
+            placeholder="HOST (e.g. oast.fun)"
             value={inputValue}
             onChange={handleInput}
           />
           <input
             type="text"
             name="token"
-            placeholder="Token (optional)"
+            placeholder="TOKEN (OPTIONAL)"
             disabled={inputValue === ''}
             value={tokenInputValue}
             onChange={handleInput}
           />
           <div className="advanced_options">
-            <span>Correlation Id Length (cidl)</span>
+            <span>CORRELATION ID LENGTH (CIDL)</span>
             <input
               type="number"
               min="1"
               max="50"
               name="cidl"
-              placeholder="Length of the correlation id preamble"
+              placeholder="LENGTH"
               disabled={inputValue === ''}
               value={correlationIdLengthInputValue}
               onChange={handleInput}
             />
           </div>
           <div className="advanced_options">
-            <span>Correlation Id Nonce Length (cidn)</span>
+            <span>CORRELATION ID NONCE LENGTH (CIDN)</span>
             <input
               type="number"
               min="1"
               max="50"
               name="cidn"
-              placeholder="Length of the correlation id nonce"
+              placeholder="LENGTH"
               disabled={inputValue === ''}
               value={correlationIdNonceLengthInputValue}
               onChange={handleInput}
@@ -205,7 +205,7 @@ const CustomHost = ({ handleCloseDialog }: CustomHostP) => {
                 className="remove_button"
                 onClick={handleDeleteConfirmationVisibility}
               >
-                Remove Custom Host
+                REMOVE CUSTOM HOST
               </button>
             )}
             <button
@@ -220,7 +220,7 @@ const CustomHost = ({ handleCloseDialog }: CustomHostP) => {
               }
               onClick={handleConfirm}
             >
-              Confirm
+              CONFIRM
               {isLoading ? <LoaderIcon /> : <ArrowRightIcon />}
             </button>
           </div>

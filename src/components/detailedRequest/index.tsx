@@ -1,9 +1,6 @@
 'use client';
 
-import React, { useEffect, useRef, memo, useCallback } from 'react';
-import Prism from 'prismjs';
-import 'prismjs/themes/prism-dark.css';
-import 'prismjs/components/prism-http';
+import React, { memo, useCallback, useState, useMemo } from 'react';
 import { CopyIcon } from '@/components/icons';
 import { copyDataToClipboard } from '@/lib';
 import { Protocol } from '@/lib/types/protocol';
@@ -18,54 +15,46 @@ interface DetailedRequestP {
 }
 
 const DetailedRequest = memo(({ title, data, view, protocol }: DetailedRequestP) => {
-  const codeRef = useRef<HTMLElement>(null);
-  const highlightTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  useEffect(() => {
-    // Debounce Prism highlighting to prevent blocking during rapid selection
-    if (highlightTimeoutRef.current) {
-      clearTimeout(highlightTimeoutRef.current);
-    }
-    
-    highlightTimeoutRef.current = setTimeout(() => {
-      if (codeRef.current) {
-        Prism.highlightElement(codeRef.current);
-      }
-    }, 100);
-
-    return () => {
-      if (highlightTimeoutRef.current) {
-        clearTimeout(highlightTimeoutRef.current);
-      }
-    };
+  const [copied, setCopied] = useState(false);
+  
+  const handleCopy = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+    copyDataToClipboard(data);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
   }, [data]);
 
-  const handleCopy = useCallback(() => {
-    copyDataToClipboard(data);
+  const lines = useMemo(() => {
+    if (!data) return [' '];
+    return data.replace(/\r\n/g, '\n').split('\n');
   }, [data]);
 
   return (
-    <div
-      className="detailed_request_container"
-      style={{
-        width: view === 'side_by_side' ? '48%' : '100%',
-        marginBottom: view === 'side_by_side' ? '0' : '3rem',
-      }}
-    >
-      <span>{title}</span>
-      <div className="body">
-        <button type="button" className="copy_button" onClick={handleCopy}>
-          Copy <CopyIcon />
-        </button>
-        <div className="pre_wrapper">
-          <pre className={protocol === 'http' ? 'language-http' : 'default'}>
-            <code
-              ref={codeRef}
-              className={protocol === 'http' ? 'language-http' : 'default'}
-            >
-              {data}
-            </code>
-          </pre>
+    <div className="detailed_request_container">
+      <div className="pane-header">
+        <div className="pane-title-group">
+          <span className="pane-title">{title}</span>
+          <button 
+            className="copy-btn"
+            onClick={handleCopy} 
+            data-tooltip="Click to Copy"
+            data-tooltip-clicked={copied ? "true" : undefined}
+          >
+            <CopyIcon style={{ width: '1.8rem', height: '1.8rem' }} />
+          </button>
+        </div>
+      </div>
+      <div className="tabs-strip">
+        <div className="active-tab-label">Pretty</div>
+      </div>
+      <div className="editor-body">
+        <div className="editor-grid">
+          {lines.map((line, i) => (
+            <React.Fragment key={i}>
+              <div className="line-number">{i + 1}</div>
+              <div className="line-content">{line || ' '}</div>
+            </React.Fragment>
+          ))}
         </div>
       </div>
     </div>

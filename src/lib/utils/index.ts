@@ -38,3 +38,12 @@ export const generateRandomString = (length: number, lettersOnly: boolean = fals
   }
   return result;
 };
+
+/**
+ * Triggers a short haptic feedback (vibration) if supported by the device.
+ */
+export const triggerHapticFeedback = (duration: number = 10): void => {
+  if (typeof window !== 'undefined' && window.navigator && window.navigator.vibrate) {
+    window.navigator.vibrate(duration);
+  }
+};

@@ -12,10 +12,10 @@ interface ResetPopupP {
 
 const ResetPopup = ({ handleCloseDialog }: ResetPopupP) => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const currentStoredData = getStoredData();
 
   const handleConfirm = () => {
     setIsLoading(true);
-    const currentStoredData = getStoredData();
     setTimeout(() => {
       register(currentStoredData.host, currentStoredData.token, true, false)
         .then((d) => {
@@ -35,17 +35,17 @@ const ResetPopup = ({ handleCloseDialog }: ResetPopupP) => {
     <div className="backdrop_container">
       <div className="dialog_box">
         <div className="header">
-          <span>Reset interactsh.com</span>
+          <span>RESET {currentStoredData.host.toUpperCase()}</span>
           <CloseIcon onClick={handleCloseDialog} style={{ cursor: 'pointer' }} />
         </div>
         <span>
-          Please confirm the action, this action can&apos;t be undone and all the client data will be
-          deleted immediately. You can download a copy of your data in JSON format by clicking the
-          Export button below or in top right.
+          PLEASE CONFIRM THE ACTION. THIS ACTION CANNOT BE UNDONE AND ALL CLIENT DATA WILL BE
+          DELETED IMMEDIATELY. YOU CAN DOWNLOAD A COPY OF YOUR DATA IN JSON FORMAT BY CLICKING THE
+          EXPORT BUTTON BELOW OR IN THE TOP RIGHT.
         </span>
         <div className="buttons">
-          <button type="button" title="Export" className="button" onClick={handleDataExport}>
-            Export <DownloadIcon />
+          <button type="button" title="EXPORT" className="button" onClick={handleDataExport}>
+            EXPORT <DownloadIcon />
           </button>
         </div>
         <div className="buttons">
@@ -55,7 +55,7 @@ const ResetPopup = ({ handleCloseDialog }: ResetPopupP) => {
             className="confirm_button"
             onClick={handleConfirm}
           >
-            Confirm {isLoading ? <LoaderIcon /> : <DeleteIcon />}
+            CONFIRM {isLoading ? <LoaderIcon /> : <DeleteIcon />}
           </button>
         </div>
       </div>

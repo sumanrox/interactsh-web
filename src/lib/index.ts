@@ -3,7 +3,7 @@ import downloadData from 'js-file-download';
 import NodeRSA from 'node-rsa';
 import { v4 as uuidv4 } from 'uuid';
 
-import { generateRandomString } from './utils';
+import { generateRandomString, triggerHapticFeedback } from './utils';
 import { getStoredData, writeStoredData, defaultStoredData } from './localStorage';
 import { Data } from './types/data';
 import { defaultFilter } from './types/filter';
@@ -12,8 +12,33 @@ import { Tab } from './types/tab';
 
 export { getStoredData, writeStoredData, defaultStoredData };
 
-export const copyDataToClipboard = (data: string): Promise<void> =>
-  navigator.clipboard.writeText(data);
+export const copyDataToClipboard = async (data: string): Promise<void> => {
+  triggerHapticFeedback();
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    try {
+      await navigator.clipboard.writeText(data);
+      return;
+    } catch (err) {
+      console.warn('Clipboard API failed, falling back to execCommand', err);
+    }
+  }
+
+  // Fallback for non-secure contexts or failed Clipboard API
+  const textArea = document.createElement('textarea');
+  textArea.value = data;
+  textArea.style.position = 'fixed';
+  textArea.style.left = '-9999px';
+  textArea.style.top = '0';
+  document.body.appendChild(textArea);
+  textArea.focus();
+  textArea.select();
+  try {
+    document.execCommand('copy');
+  } catch (err) {
+    console.error('Fallback copy failed', err);
+  }
+  document.body.removeChild(textArea);
+};
 
 export const generateUrl = (
   correlationId: string,

@@ -1,169 +1,183 @@
 @use "../../breakpoints.scss" as *;
-@include for-size(xsmall) {
-}
-
-@include for-size(small) {
-}
-
-@include for-size(medium) {
-}
-
-@include for-size(large) {
-}
-
-@include for-size(xlarge) {
-}
 
 .backdrop_container {
   width: 100vw;
   height: 100vh;
-  position: absolute;
+  position: fixed;
   top: 0;
   left: 0;
   z-index: 1000;
-  background: rgba(36, 13, 44, 0.2);
+  background: rgba(0, 0, 0, 0.85);
   display: flex;
   align-items: center;
   justify-content: center;
+  animation: fadeIn 0.15s ease-out;
 
   .dialog_box {
-    background: #000000;
-    border-radius: 0.6rem;
-    width: 45%;
-    padding: 3.5rem 4rem;
+    background: #0e0e0e;
+    border: 1px solid #333;
+    width: 480px;
+    max-width: 95vw;
+    padding: 24px;
     display: flex;
     flex-direction: column;
+    position: relative;
 
     .header {
       display: flex;
-      margin-bottom: 2rem;
-      padding: 0;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 24px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid #333;
+      
       span {
-        font-size: 2.2rem;
-        color: #ffffff;
-        letter-spacing: 0;
+        font-size: 14px;
+        font-weight: 800;
+        color: var(--accent);
+        text-transform: uppercase;
+        letter-spacing: 0.1rem;
       }
+      
       svg {
-        margin-left: auto;
-        height: 3rem;
+        height: 14px;
+        width: 14px;
         cursor: pointer;
+        color: #fff;
+        &:hover { color: var(--accent); }
       }
     }
+
     & > span {
+      font-size: 13px;
+      color: #ccc;
+      line-height: 1.6;
+      margin-bottom: 24px;
+      font-family: var(--font-sans);
+    }
+
+    input[type="text"], input[type="number"] {
+      font-family: var(--font-mono);
+      font-size: 13px;
+      color: #fff;
+      height: 38px;
+      padding: 0 12px;
+      border: 1px solid #333;
+      background: #000;
+      margin-bottom: 12px;
       width: 100%;
-      font-size: 1.6rem;
-      color: #ffffff;
-      letter-spacing: 0;
-      margin-bottom: 3.5rem;
-    }
-    input {
-      font-size: 1.5rem;
-      color: #6588ff;
-      letter-spacing: 0;
-      text-align: left;
-      height: 4rem;
-      padding: 1rem;
-      border: 1px solid #1c1c1c;
-      background: transparent;
-      border-radius: 0.6rem;
-      margin-bottom: 2rem;
-      &::placeholder {
-        color: #3c3c3c;
-      }
+      outline: none;
+
+      &::placeholder { color: #666; }
+      
       &:focus {
-        outline: none;
-        box-shadow: none;
-        border: 1px solid #6588ff;
+        border-color: var(--accent);
       }
+      
       &:disabled {
-        background: #101010;
-        border: 1px solid #101010;
+        opacity: 0.3;
+        background: #080808;
       }
     }
-    .error {
-      font-size: 1.5rem;
-      color: #ff5151;
-      letter-spacing: 0;
-      text-align: left;
-      margin-bottom: 2rem;
-    }
-    .buttons {
-      display: flex;
-      font-weight: 600;
-      margin-top: 1rem;
-      button {
-        &:disabled {
-          opacity: 0.5;
-        }
-      }
-      .delete_button {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        background: #ff5151;
-        border-radius: 0.6rem;
-        font-size: 1.4rem;
-        color: #ffffff;
-        letter-spacing: 0;
-        text-align: left;
-        height: 3.5rem;
-        margin-right: 2rem;
-        flex: 1;
-        transition: all 0.1s linear;
-        svg {
-          margin-left: 1.5rem;
-        }
-      }
-      .remove_button {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        background: rgba(216, 216, 216, 0.19);
-        border-radius: 0.6rem;
-        font-size: 1.4rem;
-        color: #ffffff;
-        letter-spacing: 0;
-        text-align: left;
-        height: 3.5rem;
-        margin-right: 2rem;
-        flex: 1;
-        transition: all 0.1s linear;
-        svg {
-          margin-left: 1.5rem;
-        }
-      }
-      .submit_button {
-        flex: 2;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        background: #3254c5;
-        border-radius: 0.6rem;
-        font-size: 1.4rem;
-        color: #ffffff;
-        letter-spacing: 0;
-        text-align: left;
-        height: 3.5rem;
-        transition: all 0.1s linear;
-        svg {
-          margin-left: 1.5rem;
-        }
-      }
-    }
+
     .advanced_options {
       display: flex;
-      align-items: left;
-      justify-content: left;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid #222;
+
       span {
-        width: 250px;
-        font-size: 1.6rem;
-        color: #ffffff;
-        letter-spacing: 0;
-        margin-top: 0.7rem;
+        font-size: 12px;
+        font-weight: 600;
+        color: #ddd;
+        font-family: var(--font-sans);
+        text-transform: uppercase;
       }
+
       input {
-        margin-left: 1rem;
+        width: 80px;
+        margin-bottom: 0;
+        text-align: center;
+      }
+    }
+
+    .error {
+      font-size: 12px;
+      color: #ff4d4d;
+      margin-top: 16px;
+      font-weight: 600;
+      background: rgba(255, 77, 77, 0.1);
+      padding: 8px 12px;
+      border-left: 2px solid #ff4d4d;
+    }
+
+    .buttons {
+      display: flex;
+      margin-top: 32px;
+      gap: 12px;
+
+      button {
+        height: 40px;
+        font-size: 12px;
+        font-weight: 800;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0 20px;
+        text-transform: uppercase;
+        letter-spacing: 0.05rem;
+        transition: all 0.1s ease;
+        
+        &:disabled {
+          opacity: 0.3;
+          cursor: not-allowed;
+        }
+
+        svg {
+          width: 14px;
+          height: 14px;
+          margin-left: 8px;
+        }
+      }
+
+      .remove_button, .delete_button {
+        background: transparent;
+        color: #ff4d4d;
+        border: 1px solid #ff4d4d;
+        flex: 1;
+        &:hover:not(:disabled) {
+          background: #ff4d4d;
+          color: #fff;
+        }
+      }
+
+      .submit_button {
+        background: var(--accent);
+        color: #000;
+        flex: 2;
+        border: 1px solid var(--accent);
+        
+        &:hover:not(:disabled) {
+          background: #fff;
+          border-color: #fff;
+          transform: translateY(-1px);
+        }
+
+        svg {
+          width: 16px;
+          height: 16px;
+          margin-left: 12px;
+          color: #000 !important; // Force black icon
+        }
       }
     }
   }
 }
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
