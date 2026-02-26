@@ -6,8 +6,8 @@ WORKDIR /app
 # Copy package files
 COPY package.json yarn.lock* package-lock.json* ./
 
-# Install dependencies
-RUN npm install
+# Install dependencies from lockfile for reproducible builds
+RUN npm ci
 
 # Copy source files
 COPY . .
